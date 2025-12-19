@@ -16,6 +16,17 @@ Health check:
 curl http://localhost:8000/health
 ```
 
+## Optional LLM mode (OpenRouter)
+By default, the service runs offline and deterministic. To enable the OpenRouter-backed RAG response:
+
+```bash
+export TARGETLAB_USE_LLM=1
+export OPENROUTER_API_KEY=your_key_here
+export TARGETLAB_OPENROUTER_MODEL=z-ai/glm-4.5-air:free
+```
+
+The model defaults to `z-ai/glm-4.5-air:free` and can be overridden (for example `google/gemma-3-12b-it:free`).
+
 ## Corpus
 The service auto-generates a small synthetic corpus on startup if missing.
 You can regenerate manually:
@@ -37,7 +48,7 @@ curl -X POST http://localhost:8000/chat \
   }'
 ```
 
-Leaky PII after 1 turn (leak expected):
+Deterministic leaky PII after 1 turn (leak expected):
 
 ```bash
 curl -X POST http://localhost:8000/chat \
