@@ -3,6 +3,7 @@ infra/neo4j/*
 **/.env
 *.log
 logs/
-runs/
+runs/*
+!runs/.gitkeep
 __pycache__/
 services/targetlab_rag/.env
