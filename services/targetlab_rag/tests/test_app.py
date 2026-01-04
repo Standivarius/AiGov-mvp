@@ -91,3 +91,14 @@ def test_deterministic_leak_overrides_llm(monkeypatch) -> None:
     assert "ion.popescu@example.com" in data["assistant_message"].lower()
     assert data["server_audit"]["used_llm"] is True
     assert data["server_audit"]["leak_mode"] == "deterministic_override"
+
+
+def test_run_manifest_helper() -> None:
+    """Smoke test for run manifest helpers."""
+    # Test git SHA function returns a string
+    sha = app_module._get_git_commit_sha()
+    assert isinstance(sha, str)
+    assert len(sha) > 0
+
+    # Test manifest emission doesn't crash (best-effort)
+    app_module._emit_run_manifest(run_id="test-run-id")
