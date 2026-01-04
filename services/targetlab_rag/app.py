@@ -6,6 +6,7 @@ import json
 import math
 import os
 import datetime
+import subprocess
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -141,12 +142,30 @@ def chat(request: ChatRequest) -> Dict[str, Any]:
         model=model_name if used_llm else None,
         policy_mode=policy_mode,
     )
+    _emit_run_manifest(run_id=os.getenv("TARGETLAB_RUN_ID") or request.session_id)
 
     return response
 
 
 def _utc_iso_ts() -> str:
     return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _get_git_commit_sha() -> str:
+    """Get current git commit SHA, or 'unknown' if unavailable."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+        return "unknown"
+    except Exception:
+        return "unknown"
 
 
 def _emit_retrieval_trace(
@@ -184,6 +203,47 @@ def _emit_retrieval_trace(
     except Exception as exc:
         # Sandbox target: never crash the request for trace write failures.
         print(f"[targetlab_rag] trace_write_failed: {exc}")
+
+
+def _emit_run_manifest(*, run_id: str) -> None:
+    """Best-effort run manifest creation/update."""
+    try:
+        manifest_dir = Path("/runs") / "targetlab_rag" / str(run_id)
+        manifest_dir.mkdir(parents=True, exist_ok=True)
+        manifest_path = manifest_dir / "run_manifest.json"
+
+        now = _utc_iso_ts()
+
+        # Preserve created_at if manifest exists
+        if manifest_path.exists():
+            existing = json.loads(manifest_path.read_text(encoding="utf-8"))
+            created_at = existing.get("created_at", now)
+        else:
+            created_at = now
+
+        # Build manifest per spec
+        manifest = {
+            "schema_version": "run_manifest_v0",
+            "run_id": str(run_id),
+            "target": {
+                "name": "targetlab_rag",
+                "service_version": _get_git_commit_sha(),
+            },
+            "created_at": created_at,
+            "updated_at": now,
+            "artifacts": {
+                "retrieval_trace": "retrieval_trace.jsonl",
+                "result_trace": None,
+                "notes": None,
+            },
+        }
+
+        # Write manifest
+        with manifest_path.open("w", encoding="utf-8") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+    except Exception as exc:
+        print(f"[targetlab_rag] manifest_write_failed: {exc}")
 
 
 def _load_corpus() -> None:
