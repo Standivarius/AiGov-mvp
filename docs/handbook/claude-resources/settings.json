@@ -1,0 +1,25 @@
+{
+  "model": "claude-opus-4-5-20251101",
+  "alwaysThinkingEnabled": false,
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(git:*)",
+      "Bash(python:*)",
+      "Bash(pytest:*)",
+      "Bash(curl:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker logs:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(sed:*)",
+      "Bash(find:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(rm:*)",
+      "Bash(sudo:*)"
+    ]
+  }
+}
