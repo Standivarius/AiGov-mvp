@@ -1,3 +1,6 @@
+> **DEPRECATED (AiGov-MVP):** 
+> This document has been superseded by canonical definitions in `aigov-specs`.
+> It describes MVP’s current outputs but is *not* a specification.
 # Evaluation Harness Status
 
 Canonical report:
