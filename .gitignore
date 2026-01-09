@@ -5,5 +5,13 @@ infra/neo4j/*
 logs/
 runs/*
 !runs/.gitkeep
+# local virtual env
+.venv/
+venv/
 __pycache__/
+*.pyc
 services/targetlab_rag/.env
+# python build artifacts
+*.egg-info/
+dist/
+build/

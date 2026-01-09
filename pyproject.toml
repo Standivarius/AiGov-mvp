@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aigov-ep"
+version = "0.0.0"
+description = "AiGov EP runtime (client-run evaluation product)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+aigov-ep = "aigov_ep.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["aigov_ep*"]
