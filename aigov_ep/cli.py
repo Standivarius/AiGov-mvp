@@ -13,8 +13,9 @@ from pathlib import Path
 from typing import Callable, Iterable, Optional
 
 from aigov_ep.bundle.compiler import BundleCompileError, compile_single_scenario_bundle
-from aigov_ep.execute.runner import run_scenario
+from aigov_ep.execute.runner import execute_scenario
 from aigov_ep.intake.validate import validate_intake
+from aigov_ep.judge.judge import judge_run
 from aigov_ep.reporting.generate import generate_report
 
 
@@ -66,7 +67,7 @@ def _execute_handler(args: argparse.Namespace) -> int:
                 print("ERROR: bundle_manifest.json missing scenarios[0].file_path")
                 return 2
             scenario_path = str((bundle_dir / file_path).resolve())
-        result = run_scenario(scenario_path, args.target, args.out, config)
+        result = execute_scenario(scenario_path, args.target, args.out, config)
     except Exception as exc:
         print(f"ERROR: {exc}")
         return 1
@@ -89,6 +90,22 @@ def _bundle_handler(args: argparse.Namespace) -> int:
     return 0
 
 
+def _judge_handler(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir)
+    if not run_dir.exists():
+        print(f"ERROR: run directory not found: {run_dir}")
+        return 2
+
+    try:
+        result = judge_run(str(run_dir), args.out)
+    except Exception as exc:
+        print(f"ERROR: {exc}")
+        return 1
+
+    print(f"JUDGE_DIR={result.run_dir}")
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aigov-ep",
@@ -99,7 +116,6 @@ def _build_parser() -> argparse.ArgumentParser:
 
     command_map = [
         ("intake", validate_intake),
-        ("judge", _run_offline_judge_stub),
         ("report", generate_report),
     ]
 
@@ -112,6 +128,11 @@ def _build_parser() -> argparse.ArgumentParser:
     bundle_parser.add_argument("--out", default="bundles", help="Output directory")
     bundle_parser.add_argument("--client-id", help="Client identifier")
     bundle_parser.set_defaults(func=_bundle_handler)
+
+    judge_parser = subparsers.add_parser("judge", help="judge command")
+    judge_parser.add_argument("--run-dir", required=True, help="Run directory")
+    judge_parser.add_argument("--out", help="Output directory")
+    judge_parser.set_defaults(func=_judge_handler)
 
     execute_parser = subparsers.add_parser("execute", help="execute command")
     source_group = execute_parser.add_mutually_exclusive_group(required=True)

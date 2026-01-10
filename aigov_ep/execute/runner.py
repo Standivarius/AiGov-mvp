@@ -3,17 +3,24 @@
 from __future__ import annotations
 
 import json
-import os
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ..evidence import build_evidence_pack, write_evidence_pack
 from ..loader import load_scenario
 from ..scorers import score_gdpr_compliance, score_pii_disclosure, score_special_category_leak
 from ..targets import get_target
+
+
+@dataclass
+class ExecuteResult:
+    run_dir: str
+    scenario_path: str | None
+    transcript_path: str
+    run_meta_path: str
+    scenario_json_path: str
 
 
 @dataclass
@@ -31,10 +38,30 @@ def run_scenario(
     output_root: str,
     config: Dict[str, Any],
 ) -> RunResult:
+    execute_result = execute_scenario(scenario_path, target_name, output_root, config)
+    transcript = _read_json(Path(execute_result.transcript_path))
+    run_meta = _read_json(Path(execute_result.run_meta_path))
+    run_id = run_meta.get("run_id") or Path(execute_result.run_dir).name
+
+    return RunResult(
+        run_id=run_id,
+        run_dir=Path(execute_result.run_dir),
+        transcript=transcript,
+        scores=[],
+        run_meta=run_meta,
+    )
+
+
+def execute_scenario(
+    scenario_path: str,
+    target_name: str,
+    out_dir: str,
+    config: Dict[str, Any],
+) -> ExecuteResult:
     scenario = load_scenario(scenario_path)
     scenario["source_path"] = scenario_path
 
-    output_root_path = Path(output_root)
+    output_root_path = Path(out_dir)
     output_root_path.mkdir(parents=True, exist_ok=True)
 
     run_id = _build_run_id()
@@ -58,6 +85,7 @@ def run_scenario(
         "leak_profile": config.get("leak_profile"),
         "leak_after": config.get("leak_after"),
         "use_llm": config.get("use_llm"),
+        "mock_judge": config.get("mock_judge"),
     }
 
     transcript: List[Dict[str, Any]] = []
@@ -105,10 +133,6 @@ def run_scenario(
         transcript.append(_entry(turn_index, "assistant", assistant_content, metadata or None))
         turn_index += 1
 
-    mock_audit = _extract_mock_audit(transcript)
-    mock_judge = config.get("mock_judge", False)
-    scores = _run_scorers(scenario, transcript, mock_audit, mock_judge)
-
     finished_at = _utc_now()
     run_meta = {
         "run_id": run_id,
@@ -118,29 +142,24 @@ def run_scenario(
         "runner_config": runner_config,
         "started_at": started_at,
         "finished_at": finished_at,
+        "http_audit": http_audit,
+        "http_raw_response": http_raw_response,
     }
 
-    _write_json(run_dir / "transcript.json", transcript)
-    _write_json(run_dir / "scores.json", scores)
-    _write_json(run_dir / "run_meta.json", run_meta)
+    transcript_path = run_dir / "transcript.json"
+    run_meta_path = run_dir / "run_meta.json"
+    scenario_json_path = run_dir / "scenario.json"
 
-    evidence_pack = build_evidence_pack(
-        scenario=scenario,
-        transcript=transcript,
-        scores=scores,
-        runner_config=runner_config,
-        mock_audit=mock_audit,
-        http_audit=http_audit,
-        http_raw_response=http_raw_response,
-    )
-    write_evidence_pack(str(run_dir / "evidence_pack.json"), evidence_pack)
+    _write_json(transcript_path, transcript)
+    _write_json(run_meta_path, run_meta)
+    _write_json(scenario_json_path, scenario)
 
-    return RunResult(
-        run_id=run_id,
-        run_dir=run_dir,
-        transcript=transcript,
-        scores=scores,
-        run_meta=run_meta,
+    return ExecuteResult(
+        run_dir=str(run_dir),
+        scenario_path=scenario_path,
+        transcript_path=str(transcript_path),
+        run_meta_path=str(run_meta_path),
+        scenario_json_path=str(scenario_json_path),
     )
 
 
@@ -212,6 +231,11 @@ def _run_scorers(
 def _write_json(path: Path, payload: Any) -> None:
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2, sort_keys=True)
+
+
+def _read_json(path: Path) -> Any:
+    with open(path, "r", encoding="utf-8") as handle:
+        return json.load(handle)
 
 
 def _utc_now() -> str:
