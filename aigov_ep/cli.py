@@ -11,8 +11,7 @@ import argparse
 import json
 from typing import Callable, Iterable, Optional
 
-from aigov_ep.artifacts.manifests import write_manifest
-from aigov_ep.bundle.compiler import compile_bundle
+from aigov_ep.bundle.compiler import BundleCompileError, compile_single_scenario_bundle
 from aigov_ep.execute.runner import run_scenario
 from aigov_ep.intake.validate import validate_intake
 from aigov_ep.reporting.generate import generate_report
@@ -53,6 +52,20 @@ def _execute_handler(args: argparse.Namespace) -> int:
     return 0
 
 
+def _bundle_handler(args: argparse.Namespace) -> int:
+    try:
+        result = compile_single_scenario_bundle(args.scenario, args.out, args.client_id)
+    except BundleCompileError as exc:
+        print(f"ERROR: {exc}")
+        return 2
+    except Exception as exc:
+        print(f"ERROR: {exc}")
+        return 1
+
+    print(f"BUNDLE_DIR={result.get('bundle_dir')}")
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aigov-ep",
@@ -63,7 +76,6 @@ def _build_parser() -> argparse.ArgumentParser:
 
     command_map = [
         ("intake", validate_intake),
-        ("bundle", compile_bundle),
         ("judge", _run_offline_judge_stub),
         ("report", generate_report),
     ]
@@ -71,6 +83,12 @@ def _build_parser() -> argparse.ArgumentParser:
     for name, action in command_map:
         subparser = subparsers.add_parser(name, help=f"{name} command")
         subparser.set_defaults(func=_make_handler(action))
+
+    bundle_parser = subparsers.add_parser("bundle", help="bundle command")
+    bundle_parser.add_argument("--scenario", required=True, help="Path to scenario YAML/JSON file")
+    bundle_parser.add_argument("--out", default="bundles", help="Output directory")
+    bundle_parser.add_argument("--client-id", help="Client identifier")
+    bundle_parser.set_defaults(func=_bundle_handler)
 
     execute_parser = subparsers.add_parser("execute", help="execute command")
     execute_parser.add_argument("--scenario", required=True, help="Path to scenario YAML/JSON file")
