@@ -3,6 +3,7 @@ infra/neo4j/*
 **/.env
 *.log
 logs/
+bundles/
 runs/*
 !runs/.gitkeep
 # local virtual env

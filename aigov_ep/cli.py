@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 from typing import Callable, Iterable, Optional
 
 from aigov_ep.bundle.compiler import BundleCompileError, compile_single_scenario_bundle
@@ -43,7 +44,29 @@ def _execute_handler(args: argparse.Namespace) -> int:
             return 2
 
     try:
-        result = run_scenario(args.scenario, args.target, args.out, config)
+        scenario_path = args.scenario
+        if not scenario_path:
+            bundle_dir = Path(args.bundle_dir)
+            manifest_path = bundle_dir / "bundle_manifest.json"
+            if not manifest_path.exists():
+                print(f"ERROR: bundle_manifest.json not found in {bundle_dir}")
+                return 2
+            try:
+                with open(manifest_path, "r", encoding="utf-8") as handle:
+                    manifest = json.load(handle)
+            except json.JSONDecodeError as exc:
+                print(f"ERROR: Invalid bundle_manifest.json ({exc.msg})")
+                return 2
+            scenarios = manifest.get("scenarios") or []
+            if not scenarios or not isinstance(scenarios, list):
+                print("ERROR: bundle_manifest.json missing scenarios list")
+                return 2
+            file_path = scenarios[0].get("file_path") if isinstance(scenarios[0], dict) else None
+            if not file_path:
+                print("ERROR: bundle_manifest.json missing scenarios[0].file_path")
+                return 2
+            scenario_path = str((bundle_dir / file_path).resolve())
+        result = run_scenario(scenario_path, args.target, args.out, config)
     except Exception as exc:
         print(f"ERROR: {exc}")
         return 1
@@ -91,7 +114,9 @@ def _build_parser() -> argparse.ArgumentParser:
     bundle_parser.set_defaults(func=_bundle_handler)
 
     execute_parser = subparsers.add_parser("execute", help="execute command")
-    execute_parser.add_argument("--scenario", required=True, help="Path to scenario YAML/JSON file")
+    source_group = execute_parser.add_mutually_exclusive_group(required=True)
+    source_group.add_argument("--scenario", help="Path to scenario YAML/JSON file")
+    source_group.add_argument("--bundle-dir", help="Path to bundle directory")
     execute_parser.add_argument("--target", required=True, help="Target adapter name")
     execute_parser.add_argument("--out", default="runs", help="Output directory")
     execute_parser.add_argument("--config", help="JSON string for target config")
