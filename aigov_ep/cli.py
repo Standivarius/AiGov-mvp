@@ -8,16 +8,25 @@ Pointers:
 from __future__ import annotations
 
 import argparse
-import sys
-from typing import Iterable, Optional
+from typing import Callable, Iterable, Optional
 
+from aigov_ep.artifacts.manifests import write_manifest
+from aigov_ep.bundle.compiler import compile_bundle
+from aigov_ep.execute.runner import run_stage_a
+from aigov_ep.intake.validate import validate_intake
+from aigov_ep.judge.judge import run_offline_judge
+from aigov_ep.reporting.generate import generate_report
 
-NOT_IMPLEMENTED_MESSAGE = "NOT IMPLEMENTED (skeleton)"
+def _make_handler(action: Callable[[], None]) -> Callable[[argparse.Namespace], int]:
+    def _handler(_: argparse.Namespace) -> int:
+        try:
+            action()
+        except NotImplementedError as exc:
+            print(str(exc))
+            return 2
+        return 0
 
-
-def _not_implemented(_: argparse.Namespace) -> int:
-    print(NOT_IMPLEMENTED_MESSAGE, file=sys.stderr)
-    return 2
+    return _handler
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -28,9 +37,17 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command")
     subparsers.required = True
 
-    for name in ["intake", "bundle", "execute", "judge", "report"]:
+    command_map = [
+        ("intake", validate_intake),
+        ("bundle", compile_bundle),
+        ("execute", run_stage_a),
+        ("judge", run_offline_judge),
+        ("report", generate_report),
+    ]
+
+    for name, action in command_map:
         subparser = subparsers.add_parser(name, help=f"{name} command")
-        subparser.set_defaults(func=_not_implemented)
+        subparser.set_defaults(func=_make_handler(action))
 
     return parser
 
