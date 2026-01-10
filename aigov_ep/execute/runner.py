@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..loader import load_scenario
-from ..scorers import score_gdpr_compliance, score_pii_disclosure, score_special_category_leak
 from ..targets import get_target
+from ..utils.io import read_json, write_json
 
 
 @dataclass
@@ -39,8 +39,8 @@ def run_scenario(
     config: Dict[str, Any],
 ) -> RunResult:
     execute_result = execute_scenario(scenario_path, target_name, output_root, config)
-    transcript = _read_json(Path(execute_result.transcript_path))
-    run_meta = _read_json(Path(execute_result.run_meta_path))
+    transcript = read_json(Path(execute_result.transcript_path))
+    run_meta = read_json(Path(execute_result.run_meta_path))
     run_id = run_meta.get("run_id") or Path(execute_result.run_dir).name
 
     return RunResult(
@@ -150,9 +150,9 @@ def execute_scenario(
     run_meta_path = run_dir / "run_meta.json"
     scenario_json_path = run_dir / "scenario.json"
 
-    _write_json(transcript_path, transcript)
-    _write_json(run_meta_path, run_meta)
-    _write_json(scenario_json_path, scenario)
+    write_json(transcript_path, transcript)
+    write_json(run_meta_path, run_meta)
+    write_json(scenario_json_path, scenario)
 
     return ExecuteResult(
         run_dir=str(run_dir),
@@ -190,52 +190,6 @@ def _format_mock_audit(payload: Dict[str, Any]) -> str:
         separators=(",", ":"),
     )
     return f"<<MOCK_AUDIT>> {audit_json}"
-
-
-def _extract_mock_audit(transcript: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-    for entry in transcript:
-        if entry.get("role") != "assistant":
-            continue
-        content = entry.get("content", "")
-        for line in content.splitlines():
-            if line.startswith("<<MOCK_AUDIT>>"):
-                raw = line.replace("<<MOCK_AUDIT>>", "", 1).strip()
-                try:
-                    payload = json.loads(raw)
-                except json.JSONDecodeError:
-                    return None
-                if isinstance(payload, dict):
-                    return payload
-    return None
-
-
-def _run_scorers(
-    scenario: Dict[str, Any],
-    transcript: List[Dict[str, Any]],
-    mock_audit: Optional[Dict[str, Any]],
-    mock_judge: bool = False,
-) -> List[Dict[str, Any]]:
-    category = (scenario.get("category") or "").upper()
-    if category == "PII_DISCLOSURE":
-        return [score_pii_disclosure(transcript, scenario=scenario)]
-    if category == "SPECIAL_CATEGORY_LEAK":
-        return [score_special_category_leak(transcript, scenario=scenario, mock_audit=mock_audit)]
-    if category == "GDPR_COMPLIANCE":
-        return [score_gdpr_compliance(transcript, scenario=scenario, evidence={}, mock_judge=mock_judge)]
-    raise ValueError(
-        f"Unknown scenario.category '{scenario.get('category')}'. "
-        "Expected PII_DISCLOSURE, SPECIAL_CATEGORY_LEAK, or GDPR_COMPLIANCE."
-    )
-
-
-def _write_json(path: Path, payload: Any) -> None:
-    with open(path, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2, sort_keys=True)
-
-
-def _read_json(path: Path) -> Any:
-    with open(path, "r", encoding="utf-8") as handle:
-        return json.load(handle)
 
 
 def _utc_now() -> str:

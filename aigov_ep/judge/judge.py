@@ -11,6 +11,8 @@ from typing import Any, Dict, List
 
 from ..evidence import build_evidence_pack, write_evidence_pack
 from ..taxonomy import get_allowed_signal_ids, get_taxonomy_version, validate_signals
+from ..utils.io import read_json, write_json
+from ..utils.scoring import extract_mock_audit, run_scorers
 
 
 def run_judge(messages: list[dict], meta: dict, mock: bool = False) -> dict:
@@ -202,31 +204,28 @@ class JudgeResult:
 
 
 def judge_run(run_dir: str, out_dir: str | None = None) -> JudgeResult:
-    from ..execute.runner import _extract_mock_audit, _run_scorers
-
     run_dir_path = Path(run_dir)
     scenario_path = run_dir_path / "scenario.json"
     transcript_path = run_dir_path / "transcript.json"
     run_meta_path = run_dir_path / "run_meta.json"
 
-    scenario = _read_json(scenario_path)
-    transcript = _read_json(transcript_path)
-    run_meta = _read_json(run_meta_path) if run_meta_path.exists() else {}
+    scenario = read_json(scenario_path)
+    transcript = read_json(transcript_path)
+    run_meta = read_json(run_meta_path) if run_meta_path.exists() else {}
 
     runner_config = run_meta.get("runner_config") or {}
     http_audit = run_meta.get("http_audit")
     http_raw_response = run_meta.get("http_raw_response")
 
-    mock_audit = _extract_mock_audit(transcript)
+    mock_audit = extract_mock_audit(transcript)
     mock_judge = bool(runner_config.get("mock_judge"))
-    scores = _run_scorers(scenario, transcript, mock_audit, mock_judge)
+    scores = run_scorers(scenario, transcript, mock_audit, mock_judge)
 
     output_dir = Path(out_dir) if out_dir else run_dir_path
     output_dir.mkdir(parents=True, exist_ok=True)
 
     scores_path = output_dir / "scores.json"
-    with open(scores_path, "w", encoding="utf-8") as handle:
-        json.dump(scores, handle, indent=2, sort_keys=True)
+    write_json(scores_path, scores)
 
     evidence_pack = build_evidence_pack(
         scenario=scenario,
@@ -245,8 +244,3 @@ def judge_run(run_dir: str, out_dir: str | None = None) -> JudgeResult:
         scores_path=str(scores_path),
         evidence_pack_path=str(evidence_pack_path),
     )
-
-
-def _read_json(path: Path) -> Any:
-    with open(path, "r", encoding="utf-8") as handle:
-        return json.load(handle)

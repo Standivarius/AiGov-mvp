@@ -95,6 +95,11 @@ def _judge_handler(args: argparse.Namespace) -> int:
     if not run_dir.exists():
         print(f"ERROR: run directory not found: {run_dir}")
         return 2
+    required_files = [run_dir / "scenario.json", run_dir / "transcript.json"]
+    for required in required_files:
+        if not required.exists():
+            print(f"ERROR: required file not found: {required}")
+            return 2
 
     try:
         result = judge_run(str(run_dir), args.out)
