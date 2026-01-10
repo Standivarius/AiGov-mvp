@@ -9,8 +9,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-# Default taxonomy path (relative to project root)
-_DEFAULT_TAXONOMY_PATH = Path(__file__).parent.parent / "taxonomy" / "signals.json"
+# Default taxonomy path (packaged resource)
+_DEFAULT_TAXONOMY_PATH = Path(__file__).parent / "signals.json"
 
 # Cached taxonomy data
 _taxonomy_cache: dict | None = None
@@ -20,7 +20,7 @@ def load_taxonomy(path: Path | str | None = None) -> dict:
     """Load taxonomy from JSON file.
 
     Args:
-        path: Path to taxonomy JSON file. Defaults to taxonomy/signals.json.
+        path: Path to taxonomy JSON file. Defaults to packaged signals.json.
 
     Returns:
         Taxonomy dict with version, description, and signals.

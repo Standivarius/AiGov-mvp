@@ -8,10 +8,15 @@ version = "0.0.0"
 description = "AiGov EP runtime (client-run evaluation product)"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "PyYAML>=6.0",
+]
 
 [project.scripts]
 aigov-ep = "aigov_ep.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["aigov_ep*"]
+
+[tool.setuptools.package-data]
+"aigov_ep.taxonomy" = ["signals.json"]
