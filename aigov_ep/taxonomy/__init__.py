@@ -9,58 +9,80 @@ import json
 from pathlib import Path
 from typing import Any
 
-# Default taxonomy path (packaged resource)
-_DEFAULT_TAXONOMY_PATH = Path(__file__).parent / "signals.json"
+# Default taxonomy paths (vendored contracts)
+_CONTRACTS_DIR = Path(__file__).parent / "contracts"
+_DEFAULT_SIGNALS_PATH = _CONTRACTS_DIR / "signals.json"
+_DEFAULT_VERDICTS_PATH = _CONTRACTS_DIR / "verdicts.json"
 
 # Cached taxonomy data
-_taxonomy_cache: dict | None = None
+_signals_cache: dict | None = None
+_verdicts_cache: dict | None = None
 
 
 def load_taxonomy(path: Path | str | None = None) -> dict:
-    """Load taxonomy from JSON file.
+    """Load signal taxonomy from JSON file.
 
     Args:
-        path: Path to taxonomy JSON file. Defaults to packaged signals.json.
+        path: Path to signals JSON file. Defaults to vendored contracts/signals.json.
 
     Returns:
-        Taxonomy dict with version, description, and signals.
+        Signals taxonomy dict with signal_ids and version metadata.
     """
-    global _taxonomy_cache
+    global _signals_cache
 
     if path is None:
-        path = _DEFAULT_TAXONOMY_PATH
+        path = _DEFAULT_SIGNALS_PATH
     else:
         path = Path(path)
 
-    # Use cache if loading default path and already loaded
-    if path == _DEFAULT_TAXONOMY_PATH and _taxonomy_cache is not None:
-        return _taxonomy_cache
+    if path == _DEFAULT_SIGNALS_PATH and _signals_cache is not None:
+        return _signals_cache
 
     with open(path, encoding="utf-8") as f:
         taxonomy = json.load(f)
 
-    # Cache if default path
-    if path == _DEFAULT_TAXONOMY_PATH:
-        _taxonomy_cache = taxonomy
+    if path == _DEFAULT_SIGNALS_PATH:
+        _signals_cache = taxonomy
 
     return taxonomy
 
 
+def _load_verdicts(path: Path | str | None = None) -> dict:
+    global _verdicts_cache
+
+    if path is None:
+        path = _DEFAULT_VERDICTS_PATH
+    else:
+        path = Path(path)
+
+    if path == _DEFAULT_VERDICTS_PATH and _verdicts_cache is not None:
+        return _verdicts_cache
+
+    with open(path, encoding="utf-8") as f:
+        verdicts = json.load(f)
+
+    if path == _DEFAULT_VERDICTS_PATH:
+        _verdicts_cache = verdicts
+
+    return verdicts
+
+
 def get_taxonomy_version(path: Path | str | None = None) -> str:
     """Get taxonomy version string."""
-    return load_taxonomy(path).get("version", "unknown")
+    return load_taxonomy(path).get("taxonomy_version", "unknown")
 
 
 def get_allowed_signal_ids(path: Path | str | None = None) -> set[str]:
     """Get set of valid signal IDs from taxonomy."""
     taxonomy = load_taxonomy(path)
-    return {s["id"] for s in taxonomy.get("signals", [])}
+    return set(taxonomy.get("signal_ids", []))
 
 
 def get_signal_metadata(path: Path | str | None = None) -> dict[str, dict]:
-    """Get mapping of signal ID to full metadata."""
+    """Get mapping of signal ID to metadata if available."""
     taxonomy = load_taxonomy(path)
-    return {s["id"]: s for s in taxonomy.get("signals", [])}
+    signal_ids = taxonomy.get("signal_ids", [])
+    return {signal_id: {"id": signal_id} for signal_id in signal_ids}
 
 
 # Known signal synonyms: maps non-canonical -> canonical signal ID
@@ -165,3 +187,9 @@ def validate_signals(signals: list[str], allowed: set[str] | None = None) -> dic
         "signals": valid_signals,
         "other_signals": other_signals,
     }
+
+
+def normalize_verdict(verdict: str) -> str:
+    verdicts = _load_verdicts()
+    legacy_aliases = verdicts.get("legacy_aliases", {})
+    return legacy_aliases.get(verdict, verdict)

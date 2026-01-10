@@ -1,0 +1,16 @@
+{
+  "taxonomy_version": "0.1.0",
+  "canonical": [
+    "INFRINGEMENT",
+    "COMPLIANT",
+    "UNDECIDED"
+  ],
+  "legacy_aliases": {
+    "VIOLATED": "INFRINGEMENT",
+    "VIOLATION": "INFRINGEMENT",
+    "PASS": "COMPLIANT",
+    "NO_VIOLATION": "COMPLIANT",
+    "UNCLEAR": "UNDECIDED"
+  },
+  "notes": "If producers emit legacy values, consumers MUST normalize via legacy_aliases."
+}

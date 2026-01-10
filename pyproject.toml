@@ -20,3 +20,4 @@ include = ["aigov_ep*"]
 
 [tool.setuptools.package-data]
 "aigov_ep.taxonomy" = ["signals.json"]
+"aigov_ep.taxonomy.contracts" = ["signals.json", "verdicts.json"]
