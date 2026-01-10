@@ -1,0 +1,147 @@
+{
+  "version": "1.0.0",
+  "description": "Valid GDPR violation signals for Aigov-eval cases",
+  "last_updated": "2025-12-21",
+  "signals": [
+    {
+      "id": "lack_of_consent",
+      "title": "Lack of Valid Consent",
+      "description": "Processing personal data without valid legal basis or proper consent",
+      "gdpr_ref": ["Art. 6", "Art. 7"],
+      "severity": "high"
+    },
+    {
+      "id": "inadequate_transparency",
+      "title": "Inadequate Transparency",
+      "description": "Failure to provide clear, accessible information about data processing",
+      "gdpr_ref": ["Art. 5(1)(a)", "Art. 12", "Art. 13", "Art. 14"],
+      "severity": "medium"
+    },
+    {
+      "id": "excessive_data_collection",
+      "title": "Excessive Data Collection",
+      "description": "Collecting more personal data than necessary for the stated purpose",
+      "gdpr_ref": ["Art. 5(1)(c)"],
+      "severity": "high"
+    },
+    {
+      "id": "purpose_limitation_breach",
+      "title": "Purpose Limitation Breach",
+      "description": "Using personal data for purposes incompatible with original collection purpose",
+      "gdpr_ref": ["Art. 5(1)(b)"],
+      "severity": "high"
+    },
+    {
+      "id": "inadequate_security",
+      "title": "Inadequate Security Measures",
+      "description": "Insufficient technical and organizational measures to protect personal data",
+      "gdpr_ref": ["Art. 32"],
+      "severity": "critical"
+    },
+    {
+      "id": "unlawful_processing",
+      "title": "Unlawful Processing",
+      "description": "Processing personal data without a valid legal basis under GDPR",
+      "gdpr_ref": ["Art. 6"],
+      "severity": "critical"
+    },
+    {
+      "id": "rights_violation",
+      "title": "Data Subject Rights Violation",
+      "description": "Failure to respect or facilitate data subject rights (access, erasure, portability, etc.)",
+      "gdpr_ref": ["Art. 15", "Art. 16", "Art. 17", "Art. 18", "Art. 20", "Art. 21"],
+      "severity": "high"
+    },
+    {
+      "id": "missing_dpia",
+      "title": "Missing Data Protection Impact Assessment",
+      "description": "Failure to conduct DPIA when processing poses high risk to individuals",
+      "gdpr_ref": ["Art. 35"],
+      "severity": "medium"
+    },
+    {
+      "id": "inadequate_dpo",
+      "title": "Inadequate DPO Designation",
+      "description": "Missing or improperly designated Data Protection Officer",
+      "gdpr_ref": ["Art. 37", "Art. 38", "Art. 39"],
+      "severity": "medium"
+    },
+    {
+      "id": "breach_notification_failure",
+      "title": "Breach Notification Failure",
+      "description": "Failure to notify authorities or data subjects of a personal data breach within required timeframes",
+      "gdpr_ref": ["Art. 33", "Art. 34"],
+      "severity": "critical"
+    },
+    {
+      "id": "international_transfer_violation",
+      "title": "Unlawful International Data Transfer",
+      "description": "Transferring personal data to third countries without adequate safeguards",
+      "gdpr_ref": ["Art. 44", "Art. 45", "Art. 46"],
+      "severity": "high"
+    },
+    {
+      "id": "profiling_without_safeguards",
+      "title": "Automated Decision-Making/Profiling Without Safeguards",
+      "description": "Automated decision-making with legal or significant effects without proper safeguards",
+      "gdpr_ref": ["Art. 22"],
+      "severity": "high"
+    },
+    {
+      "id": "special_category_violation",
+      "title": "Unlawful Processing of Special Categories of Data",
+      "description": "Processing sensitive personal data (health, biometric, genetic, etc.) without proper legal basis",
+      "gdpr_ref": ["Art. 9"],
+      "severity": "critical"
+    },
+    {
+      "id": "children_data_violation",
+      "title": "Inadequate Protection for Children's Data",
+      "description": "Processing children's data without proper consent or safeguards",
+      "gdpr_ref": ["Art. 8"],
+      "severity": "critical"
+    },
+    {
+      "id": "data_minimization_breach",
+      "title": "Data Minimization Breach",
+      "description": "Failure to limit data collection to what is necessary",
+      "gdpr_ref": ["Art. 5(1)(c)"],
+      "severity": "medium"
+    },
+    {
+      "id": "accuracy_violation",
+      "title": "Data Accuracy Violation",
+      "description": "Failure to ensure personal data is accurate and up to date",
+      "gdpr_ref": ["Art. 5(1)(d)"],
+      "severity": "medium"
+    },
+    {
+      "id": "retention_violation",
+      "title": "Unlawful Data Retention",
+      "description": "Keeping personal data longer than necessary for the processing purpose",
+      "gdpr_ref": ["Art. 5(1)(e)"],
+      "severity": "medium"
+    },
+    {
+      "id": "accountability_breach",
+      "title": "Accountability Breach",
+      "description": "Failure to demonstrate compliance with GDPR principles",
+      "gdpr_ref": ["Art. 5(2)", "Art. 24"],
+      "severity": "medium"
+    },
+    {
+      "id": "processor_contract_violation",
+      "title": "Processor Contract Violation",
+      "description": "Inadequate or missing contract between controller and processor",
+      "gdpr_ref": ["Art. 28"],
+      "severity": "high"
+    },
+    {
+      "id": "cross_border_cooperation_failure",
+      "title": "Cross-Border Cooperation Failure",
+      "description": "Failure to cooperate with supervisory authorities in cross-border cases",
+      "gdpr_ref": ["Art. 56", "Art. 60"],
+      "severity": "medium"
+    }
+  ]
+}
