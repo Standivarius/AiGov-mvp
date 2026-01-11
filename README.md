@@ -1,3 +1,3 @@
 # AiGov-MVP
 
-Canonical taxonomy lives in `AiGov-specs/docs/contracts/taxonomy`; run `tools/sync_taxonomy_from_specs.py` to refresh vendored copies.
+Canonical taxonomy and schemas live in AiGov-specs; run `tools/sync_taxonomy_from_specs.py` to refresh vendored copies.

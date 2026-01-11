@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/Standivarius/AiGov-specs/schemas/behaviour_json_v0_phase0.schema.json",
+  "title": "Behaviour JSON v0 Phase 0 (AiGov-specs canonical schema)",
+  "description": "Canonical schema from AiGov-specs for judge output in behaviour_json_v0_phase0 format. NOTE: This is currently a placeholder copy of the eval schema. The canonical specs schema will eventually require: (1) IDs in AUD-YYYYMMDD-NNN format, (2) UUIDs for certain fields, (3) reasoning as single string (not array), (4) inspect_provenance with log_file/sample_id/epoch fields.",
+  "type": "object",
+  "required": [
+    "audit_id",
+    "run_id",
+    "finding_id",
+    "scenario_id",
+    "framework",
+    "rating",
+    "reasoning",
+    "inspect_provenance"
+  ],
+  "properties": {
+    "audit_id": {
+      "type": "string",
+      "description": "Unique identifier for the audit session (eventual requirement: AUD-YYYYMMDD-NNN format)",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Unique identifier for this specific run (eventual requirement: UUID)",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "finding_id": {
+      "type": "string",
+      "description": "Unique identifier for this finding (eventual requirement: UUID)",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "scenario_id": {
+      "type": "string",
+      "description": "Identifier of the scenario being evaluated"
+    },
+    "framework": {
+      "type": "string",
+      "description": "Compliance framework (e.g., GDPR, HIPAA)",
+      "enum": [
+        "GDPR",
+        "HIPAA",
+        "CCPA",
+        "SOC2",
+        "ISO27001"
+      ]
+    },
+    "rating": {
+      "type": "string",
+      "description": "Overall compliance rating",
+      "enum": [
+        "VIOLATED",
+        "COMPLIANT",
+        "UNDECIDED"
+      ]
+    },
+    "reasoning": {
+      "type": "array",
+      "description": "List of reasoning statements explaining the rating (eventual requirement: single string, not array)",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "legal_references": {
+      "type": "array",
+      "description": "Legal citations and article references",
+      "items": {
+        "type": "string"
+      }
+    },
+    "signals": {
+      "type": "array",
+      "description": "List of detected compliance signals",
+      "items": {
+        "type": "string"
+      }
+    },
+    "severity": {
+      "type": "string",
+      "description": "Severity level of the finding",
+      "enum": [
+        "CRITICAL",
+        "HIGH",
+        "MEDIUM",
+        "LOW",
+        "INFO"
+      ]
+    },
+    "inspect_provenance": {
+      "type": "object",
+      "description": "Provenance metadata about the inspection/judge process (eventual requirements: log_file, sample_id, epoch)",
+      "required": [
+        "model",
+        "timestamp_utc"
+      ],
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Model or judge version used"
+        },
+        "temperature": {
+          "type": "number",
+          "description": "Temperature parameter used (if applicable)",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "mock": {
+          "type": "boolean",
+          "description": "Whether this was a mock/offline judge run"
+        },
+        "timestamp_utc": {
+          "type": "string",
+          "description": "ISO 8601 timestamp of when the judgment was made",
+          "format": "date-time"
+        },
+        "source_fixture": {
+          "type": "string",
+          "description": "Source fixture file (for offline judge)"
+        },
+        "log_file": {
+          "type": "string",
+          "description": "Path to log file (will be required in strict specs schema)"
+        },
+        "sample_id": {
+          "type": "string",
+          "description": "Sample identifier (will be required in strict specs schema)"
+        },
+        "epoch": {
+          "type": "integer",
+          "description": "Epoch timestamp (will be required in strict specs schema)"
+        }
+      },
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
