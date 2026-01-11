@@ -1,6 +1,6 @@
 {
   "taxonomy_version": "0.1.0",
-  "generated_from": "AiGov-mvp/aigov_ep/taxonomy/signals.json (snapshot)",
+  "generated_from": "AiGov-specs/docs/contracts/taxonomy/signals.json (snapshot)",
   "signal_ids": [
     "lack_of_consent",
     "inadequate_transparency",
