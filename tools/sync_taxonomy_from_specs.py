@@ -19,13 +19,19 @@ def main() -> int:
     specs_root = Path(args.specs_root)
     src_dir = specs_root / "docs" / "contracts" / "taxonomy"
     dest_dir = Path(__file__).resolve().parents[1] / "aigov_ep" / "taxonomy" / "contracts"
+    schema_src = specs_root / "schemas" / "behaviour_json_v0_phase0.schema.json"
+    schema_dest = Path(__file__).resolve().parents[1] / "aigov_ep" / "contracts"
 
     sources = {
         "signals.json": src_dir / "signals.json",
         "verdicts.json": src_dir / "verdicts.json",
     }
+    extra_files = {
+        "behaviour_json_v0_phase0.schema.json": schema_src,
+    }
 
     missing = [name for name, path in sources.items() if not path.exists()]
+    missing += [name for name, path in extra_files.items() if not path.exists()]
     if missing:
         print(f"ERROR: missing source files: {', '.join(missing)}")
         return 2
@@ -33,6 +39,12 @@ def main() -> int:
     dest_dir.mkdir(parents=True, exist_ok=True)
     for name, src_path in sources.items():
         dest_path = dest_dir / name
+        shutil.copyfile(src_path, dest_path)
+        print(f"copied {src_path} -> {dest_path}")
+
+    schema_dest.mkdir(parents=True, exist_ok=True)
+    for name, src_path in extra_files.items():
+        dest_path = schema_dest / name
         shutil.copyfile(src_path, dest_path)
         print(f"copied {src_path} -> {dest_path}")
 
