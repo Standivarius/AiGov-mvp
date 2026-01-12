@@ -1,4 +1,4 @@
-"""Sync taxonomy contracts from AiGov-specs into EP."""
+"""Sync taxonomy and evidence pack contracts from AiGov-specs into EP."""
 
 from __future__ import annotations
 
@@ -9,7 +9,9 @@ from pathlib import Path
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Sync taxonomy contracts from AiGov-specs.")
+    parser = argparse.ArgumentParser(
+        description="Sync taxonomy and evidence pack contracts from AiGov-specs."
+    )
     parser.add_argument("--specs-root", default="..\\AiGov-specs", help="Path to AiGov-specs repo root")
     return parser.parse_args()
 
@@ -21,6 +23,9 @@ def main() -> int:
     dest_dir = Path(__file__).resolve().parents[1] / "aigov_ep" / "taxonomy" / "contracts"
     schema_src = specs_root / "schemas" / "behaviour_json_v0_phase0.schema.json"
     schema_dest = Path(__file__).resolve().parents[1] / "aigov_ep" / "contracts"
+    evidence_src = specs_root / "docs" / "contracts" / "evidence_pack"
+    evidence_dest = schema_dest / "evidence_pack"
+    evidence_manifest_src = specs_root / "schemas" / "evidence_pack_manifest_v1.json"
 
     sources = {
         "signals.json": src_dir / "signals.json",
@@ -29,9 +34,14 @@ def main() -> int:
     extra_files = {
         "behaviour_json_v0_phase0.schema.json": schema_src,
     }
+    evidence_files = {
+        "evidence_pack_v0.schema.json": evidence_src / "evidence_pack_v0.schema.json",
+        "evidence_pack_manifest_v1.json": evidence_manifest_src,
+    }
 
     missing = [name for name, path in sources.items() if not path.exists()]
     missing += [name for name, path in extra_files.items() if not path.exists()]
+    missing += [name for name, path in evidence_files.items() if not path.exists()]
     if missing:
         print(f"ERROR: missing source files: {', '.join(missing)}")
         return 2
@@ -45,6 +55,12 @@ def main() -> int:
     schema_dest.mkdir(parents=True, exist_ok=True)
     for name, src_path in extra_files.items():
         dest_path = schema_dest / name
+        shutil.copyfile(src_path, dest_path)
+        print(f"copied {src_path} -> {dest_path}")
+
+    evidence_dest.mkdir(parents=True, exist_ok=True)
+    for name, src_path in evidence_files.items():
+        dest_path = evidence_dest / name
         shutil.copyfile(src_path, dest_path)
         print(f"copied {src_path} -> {dest_path}")
 
