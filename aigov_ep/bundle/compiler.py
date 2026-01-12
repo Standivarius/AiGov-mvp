@@ -56,6 +56,9 @@ def compile_single_scenario_bundle(
     with open(manifest_path, "w", encoding="utf-8") as handle:
         json.dump(manifest, handle, indent=2, sort_keys=True)
 
+    build_meta_path = bundle_dir / "build_meta.json"
+    _write_build_meta(build_meta_path)
+
     manifest_checksum = _sha256_file(manifest_path)
 
     checksums_path = bundle_dir / "checksums.sha256"
@@ -95,7 +98,6 @@ def _build_manifest(
 ) -> Dict[str, Any]:
     return {
         "manifest_version": "0.1",
-        "created_at": _utc_now(),
         "bundle_hash": bundle_hash,
         "client": {"client_id": client_id},
         "scenarios": [
@@ -136,6 +138,12 @@ def _write_checksums(path: Path, entries: list[tuple[str, str]]) -> None:
     with open(path, "w", encoding="utf-8") as handle:
         for checksum, rel_path in entries:
             handle.write(f"{checksum}  {rel_path}\n")
+
+
+def _write_build_meta(path: Path) -> None:
+    payload = {"created_at": _utc_now()}
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
 
 
 def _utc_now() -> str:
