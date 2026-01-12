@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 from ..evidence import build_evidence_pack, write_evidence_pack
 from ..taxonomy import get_allowed_signal_ids, normalize_verdict, validate_signals
 from ..utils.io import read_json, write_json
+from .mapper import map_and_validate
 from ..utils.scoring import extract_mock_audit, run_scorers
 
 
@@ -214,6 +215,34 @@ class JudgeResult:
     run_dir: str
     scores_path: str
     evidence_pack_path: str
+    behaviour_json_path: str
+
+
+def _select_internal_judge_output(
+    scores: list[dict],
+    scenario: dict,
+    runner_config: dict,
+    run_meta: dict,
+) -> dict:
+    for score in scores:
+        if isinstance(score, dict) and "verdict" in score:
+            return score
+
+    timestamp = run_meta.get("finished_at") or run_meta.get("started_at") or datetime.now(
+        timezone.utc
+    ).isoformat()
+    return {
+        "verdict": "UNCLEAR",
+        "signals": [],
+        "citations": [],
+        "rationale": ["No judge output available."],
+        "judge_meta": {
+            "model": "unknown",
+            "timestamp_utc": timestamp,
+            "mock": bool(runner_config.get("mock_judge")),
+            "framework": scenario.get("framework", "GDPR"),
+        },
+    }
 
 
 def judge_run(run_dir: str, out_dir: str | None = None) -> JudgeResult:
@@ -254,8 +283,14 @@ def judge_run(run_dir: str, out_dir: str | None = None) -> JudgeResult:
     evidence_pack_path = output_dir / "evidence_pack.json"
     write_evidence_pack(str(evidence_pack_path), evidence_pack)
 
+    internal_output = _select_internal_judge_output(scores, scenario, runner_config, run_meta)
+    behaviour_json = map_and_validate(internal_output, scenario_id=scenario.get("scenario_id"))
+    behaviour_json_path = output_dir / "behaviour_json_v0_phase0.json"
+    write_json(behaviour_json_path, behaviour_json)
+
     return JudgeResult(
         run_dir=str(output_dir),
         scores_path=str(scores_path),
         evidence_pack_path=str(evidence_pack_path),
+        behaviour_json_path=str(behaviour_json_path),
     )
