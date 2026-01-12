@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Evidence Pack v0",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "run_dir",
+    "scenario_id",
+    "target",
+    "signals",
+    "items"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.1.0"
+    },
+    "run_dir": {
+      "type": "string"
+    },
+    "scenario_id": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string"
+    },
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "signal_id",
+          "verdict"
+        ],
+        "properties": {
+          "signal_id": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "kind",
+          "payload"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          },
+          "signal_id": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "timestamp_utc": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

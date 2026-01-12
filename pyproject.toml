@@ -22,3 +22,7 @@ include = ["aigov_ep*"]
 "aigov_ep.taxonomy" = ["signals.json"]
 "aigov_ep.taxonomy.contracts" = ["signals.json", "verdicts.json"]
 "aigov_ep.contracts" = ["behaviour_json_v0_phase0.schema.json"]
+"aigov_ep.contracts.evidence_pack" = [
+    "evidence_pack_v0.schema.json",
+    "evidence_pack_manifest_v1.json",
+]
