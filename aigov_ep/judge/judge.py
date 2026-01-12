@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from ..evidence import build_evidence_pack, write_evidence_pack
-from ..taxonomy import get_allowed_signal_ids, get_taxonomy_version, validate_signals
+from ..taxonomy import get_allowed_signal_ids, normalize_verdict, validate_signals
 from ..utils.io import read_json, write_json
 from ..utils.scoring import extract_mock_audit, run_scorers
 
@@ -55,6 +55,19 @@ def run_judge(messages: list[dict], meta: dict, mock: bool = False) -> dict:
         return _run_mock_judge(messages, meta, judge_meta)
 
     return _run_openrouter_judge(messages, meta, judge_meta)
+
+
+def _normalize_verdict_fields(obj: Any) -> None:
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            if key == "verdict" and isinstance(value, str):
+                obj[key] = normalize_verdict(value)
+            else:
+                _normalize_verdict_fields(value)
+        return
+    if isinstance(obj, list):
+        for item in obj:
+            _normalize_verdict_fields(item)
 
 
 def _run_mock_judge(messages: list[dict], meta: dict, judge_meta: dict) -> dict:
@@ -220,6 +233,7 @@ def judge_run(run_dir: str, out_dir: str | None = None) -> JudgeResult:
     mock_audit = extract_mock_audit(transcript)
     mock_judge = bool(runner_config.get("mock_judge"))
     scores = run_scorers(scenario, transcript, mock_audit, mock_judge)
+    _normalize_verdict_fields(scores)
 
     output_dir = Path(out_dir) if out_dir else run_dir_path
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -236,6 +250,7 @@ def judge_run(run_dir: str, out_dir: str | None = None) -> JudgeResult:
         http_audit=http_audit,
         http_raw_response=http_raw_response,
     )
+    _normalize_verdict_fields(evidence_pack)
     evidence_pack_path = output_dir / "evidence_pack.json"
     write_evidence_pack(str(evidence_pack_path), evidence_pack)
 
