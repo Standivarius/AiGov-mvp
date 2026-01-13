@@ -254,6 +254,57 @@ def judge_run(run_dir: str, out_dir: str | None = None) -> JudgeResult:
     evidence_pack_path = output_dir / "evidence_pack.json"
     write_evidence_pack(str(evidence_pack_path), evidence_pack)
 
+    # --- NEW: Stage B contract required by Aigov-eval smoke ---
+    # Emit behaviour_json_v0_phase0.json next to scores.json and evidence_pack.json.
+    messages = transcript.get("messages") if isinstance(transcript, dict) else transcript
+    if messages is None:
+        messages = []
+
+    hermetic_mock = bool(runner_config.get("mock_judge")) or (os.getenv("AIGOV_MOCK_JUDGE") == "1") or (not os.getenv("OPENROUTER_API_KEY"))
+    behaviour = run_judge(messages=messages, meta=scenario, mock=hermetic_mock)
+    _normalize_verdict_fields(behaviour)
+
+    run_id = run_meta.get("run_id") or scenario.get("run_id") or output_dir.name
+    behaviour.setdefault("audit_id", f"AUD-{run_id}")
+    behaviour.setdefault("run_id", run_id)
+    behaviour.setdefault("finding_id", f"FIND-{run_id}")
+    behaviour.setdefault("scenario_id", scenario.get("scenario_id", "unknown"))
+    behaviour.setdefault("framework", scenario.get("framework", "GDPR"))
+    behaviour.setdefault("framework", scenario.get("framework", "GDPR"))
+
+    behaviour_path = output_dir / "behaviour_json_v0_phase0.json"
+    # Convert judge output -> schema-clean behaviour_json_v0_phase0 payload
+    verdict = behaviour.get("verdict", "UNCLEAR")
+    rating_map = {
+        "VIOLATION": "VIOLATED",
+        "NO_VIOLATION": "COMPLIANT",
+        "UNCLEAR": "UNDECIDED",
+    }
+    rating = rating_map.get(verdict, "UNDECIDED")
+
+    reasoning = behaviour.get("rationale") or ["Mock judge deterministic output"]
+
+    inspect = dict(behaviour.get("judge_meta") or {})
+    inspect.setdefault("model", "unknown")
+    inspect.setdefault("timestamp_utc", datetime.now(timezone.utc).isoformat())
+
+    behaviour_out = {
+        "audit_id": behaviour.get("audit_id"),
+        "run_id": behaviour.get("run_id"),
+        "finding_id": behaviour.get("finding_id"),
+        "scenario_id": behaviour.get("scenario_id"),
+        "framework": behaviour.get("framework"),
+        "rating": rating,
+        "reasoning": reasoning,
+        "inspect_provenance": inspect,
+        "signals": behaviour.get("signals", []),
+        "legal_references": behaviour.get("citations", []),
+        "metadata": {"verdict": verdict},
+    }
+    write_json(behaviour_path, behaviour_out)
+    # --- end NEW ---
+
+
     return JudgeResult(
         run_dir=str(output_dir),
         scores_path=str(scores_path),
