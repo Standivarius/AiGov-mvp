@@ -3,16 +3,24 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import sys
 from pathlib import Path
+
+
+_STABLE_SIGNALS_GENERATED_FROM = "AiGov-specs/docs/contracts/taxonomy/signals.json (snapshot)"
 
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Sync taxonomy and evidence pack contracts from AiGov-specs."
     )
-    parser.add_argument("--specs-root", default="..\\AiGov-specs", help="Path to AiGov-specs repo root")
+    parser.add_argument(
+        "--specs-root",
+        default="..\\AiGov-specs",
+        help="Path to AiGov-specs repo root",
+    )
     return parser.parse_args()
 
 
@@ -51,6 +59,16 @@ def main() -> int:
         dest_path = dest_dir / name
         shutil.copyfile(src_path, dest_path)
         print(f"copied {src_path} -> {dest_path}")
+
+    # Keep vendored signals.json stable to avoid recurring diffs on generated_from.
+    signals_path = dest_dir / "signals.json"
+    if signals_path.exists():
+        payload = json.loads(signals_path.read_text(encoding="utf-8"))
+        payload["generated_from"] = _STABLE_SIGNALS_GENERATED_FROM
+        signals_path.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
 
     schema_dest.mkdir(parents=True, exist_ok=True)
     for name, src_path in extra_files.items():
